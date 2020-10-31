@@ -7,7 +7,7 @@ import lombok.Setter;
 import java.io.Serializable;
 
 /**
- * TODO
+ * 返回结果实体类
  *
  * @author : OlinH
  * @version : v1.0
@@ -25,7 +25,7 @@ public class Result implements Serializable {
     /**
      * 成功
      *
-     * @return {BaseResult}
+     * @return {Result}
      */
     public static Result success() {
         Result result  = new Result();
@@ -37,7 +37,7 @@ public class Result implements Serializable {
      * 成功
      *
      * @param data ：实体对象数据
-     * @return ：{BaseResult}
+     * @return ：{Result}
      */
     public static Result success(Object data) {
         Result result  = new Result();
@@ -50,7 +50,7 @@ public class Result implements Serializable {
      * 失败
      *
      * @param resultCode ：结果枚举类状态码
-     * @return ：{BaseResult}
+     * @return ：{Result}
      */
     public static Result failure(ResultEnum resultCode) {
         Result result  = new Result();

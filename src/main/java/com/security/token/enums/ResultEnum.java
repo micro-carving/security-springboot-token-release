@@ -1,6 +1,6 @@
 package com.security.token.enums;
 
-import org.springframework.http.HttpStatus;
+import cn.hutool.http.HttpStatus;
 
 /**
  * TODO
