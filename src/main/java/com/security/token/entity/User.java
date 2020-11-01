@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
- * TODO
+ * 用户实体类
  *
  * @author : OlinH
  * @version : v1.0
@@ -40,15 +40,5 @@ public class User extends BaseEntity<User> {
     /**
      * 用户权限，p1和p2权限
      */
-    private Set<String> authorities;
-
-    /**
-     * 获取实例
-     *
-     * @return 返回实体类
-     */
-    @Override
-    public User buildEntity() {
-        return new User(userName, password, fullName, mobile, authorities);
-    }
+    private String authorities;
 }
