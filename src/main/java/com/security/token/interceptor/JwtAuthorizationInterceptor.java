@@ -54,14 +54,16 @@ public class JwtAuthorizationInterceptor implements HandlerInterceptor {
         // 如果打上了AuthToken注解则需要验证token
         if (method.getAnnotation(AuthToken.class) != null || handlerMethod.getBeanType().getAnnotation(AuthToken.class) != null) {
             // 获取请求头内容
-            String token = request.getHeader(TokenConstant.ACCESS_TOKEN);
-            log.info("Get token from request header is {} ", token);
+            String token = request.getHeader("token");
+            if (StrUtil.isEmpty(token)) {
+                this.responseContent(response, "token 为空了！", StatusCodeConstant.PARAM_IS_NULL_OR_BLANK);
+                return false;
+            }
+            log.info("Get token from request header is: {} ", token);
             String userName = "";
             Jedis jedis = new Jedis(hostName, port);
-            if (StrUtil.isNotBlank(token)) {
-                userName = jedis.get(TokenConstant.USER_NAME);
-                log.info("Get userName from Redis is {}", userName);
-            }
+            userName = jedis.get(TokenConstant.USER_NAME);
+            log.info("Get userName from Redis is: {}", userName);
             final User user = userService.getByUserName(userName);
             // 验证token的合法性，判断token中加密的用户名称与数据库存入的用户名称是否相同
             if (tokenUtil.verification(token, user)) {
@@ -79,25 +81,13 @@ public class JwtAuthorizationInterceptor implements HandlerInterceptor {
                     jedis.expire(TokenConstant.TIME_STAMP, RedisConstant.TOKEN_EXPIRE_TIME);
                     log.info("Reset expire time success!");
                 }
-                final String authorities = user.getAuthorities();
-                // 请求的url
-                final String requestUri = request.getRequestURI();
-                // 具有p1权限才能访问r1上的资源，具有p2权限才能访问r2上的资源，以此类推！
-                if (authorities.contains("p1") && requestUri.contains("/r/r1")) {
-                    return true;
-                } else if (authorities.contains("p2") && requestUri.contains("/r/r2")) {
-                    return true;
-                } else if (authorities.contains("p3") && requestUri.contains("/r/r3")) {
-                    return true;
-                } else {
-                    this.responseContent(response, "没有权限，拒绝访问！", StatusCodeConstant.HTTP_UNAUTHORIZED);
-                }
                 // 用完关闭
                 jedis.close();
                 return true;
             } else {
                 this.responseContent(response, "token 验证不合法！", StatusCodeConstant.PARAM_IS_INVALID);
             }
+            return false;
         }
         return true;
     }
@@ -121,7 +111,7 @@ public class JwtAuthorizationInterceptor implements HandlerInterceptor {
      * @throws IOException ：io异常
      */
     private void responseContent(HttpServletResponse response, String msg, int statusCode) throws IOException {
-        response.setContentType("text/html;charset=utf-8");
+        response.setContentType("application/json;charset=utf-8");
         response.setStatus(statusCode);
         final PrintWriter writer = response.getWriter();
         writer.println(msg);

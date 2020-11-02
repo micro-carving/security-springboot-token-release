@@ -20,26 +20,40 @@ public class RedisUtil {
     @Value("${spring.redis.port}")
     private int port;
 
+
+
     /**
-     * redis相关配置
+     * 重载redis中get方法，设置键值对
      *
-     * @param token ：token字符串
+     * @param token    ：token字符串
      * @param userName ：用户名
-     * @param password ：密码
      * @return {Jedis}
      */
-    public Jedis redisConfig(String token, String userName, String password) {
+    public Jedis setProps(String token, String userName, String authorities) {
         final Jedis jedis = new Jedis(hostName, port);
         // 设置redis的key与value值
         jedis.set(TokenConstant.ACCESS_TOKEN, token);
         jedis.set(TokenConstant.USER_NAME, userName);
+        jedis.set(TokenConstant.AUTHORITIES, authorities);
         long currentTime = System.currentTimeMillis();
         jedis.set(TokenConstant.TIME_STAMP, Long.toString(currentTime));
         // 设置key生存时间，当key过期时，它会被自动删除，时间是秒
         jedis.expire(TokenConstant.ACCESS_TOKEN, RedisConstant.TOKEN_EXPIRE_TIME);
         jedis.expire(TokenConstant.USER_NAME, RedisConstant.TOKEN_EXPIRE_TIME);
+        jedis.expire(TokenConstant.AUTHORITIES, RedisConstant.TOKEN_EXPIRE_TIME);
         jedis.expire(TokenConstant.TIME_STAMP, RedisConstant.TOKEN_EXPIRE_TIME);
         jedis.close();
         return jedis;
+    }
+
+    /**
+     * 重载redis中get方法，获取键对应的值
+     *
+     * @param key ：键
+     * @return {字符串的值}
+     */
+    public String getValueByKey(String key) {
+        final Jedis jedis = new Jedis(hostName, port);
+        return jedis.get(key);
     }
 }

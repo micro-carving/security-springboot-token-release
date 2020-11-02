@@ -5,9 +5,9 @@ import cn.hutool.http.HttpStatus;
 import java.io.Serializable;
 
 /**
- * TODO
+ * 状态码常量类
  *
- * @author : TYKY_HTOJ
+ * @author : OlinH
  * @version : v1.0
  * @since : 2020/10/31
  */

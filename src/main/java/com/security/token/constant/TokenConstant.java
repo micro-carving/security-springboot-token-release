@@ -11,7 +11,7 @@ public final class TokenConstant {
     /**
      * 访问的token常量
      */
-    public static final String ACCESS_TOKEN = "access_token";
+    public static final String ACCESS_TOKEN = "token";
 
     /**
      * 用户名常量
@@ -22,4 +22,9 @@ public final class TokenConstant {
      * 时间戳常量
      */
     public static final String TIME_STAMP = "time_stamp";
+
+    /**
+     * 用户权限常量
+     */
+    public static final String AUTHORITIES = "authorities";
 }
