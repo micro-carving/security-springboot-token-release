@@ -1,17 +1,13 @@
 package com.security.token.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.security.token.entity.User;
 import com.security.token.mapper.IUserMapper;
 import com.security.token.service.IUserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * 用户业务实现类
@@ -21,7 +17,7 @@ import java.util.Set;
  * @since : 2020/10/31
  */
 @Service
-public class IUserServiceImpl extends ServiceImpl<IUserMapper, User> implements IUserService {
+public class UserServiceImpl extends ServiceImpl<IUserMapper, User> implements IUserService {
 
     @Resource
     IUserMapper userMapper;

@@ -1,10 +1,8 @@
 package com.security.token.api;
 
 import com.security.token.enums.StatusCodeEnum;
-import lombok.Data;
 import lombok.Getter;
 
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Objects;
 

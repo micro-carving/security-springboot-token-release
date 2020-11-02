@@ -3,30 +3,23 @@ package com.security.token.controller;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
 import com.auth0.jwt.JWT;
 import com.security.token.annotation.AuthToken;
 import com.security.token.api.Result;
-import com.security.token.api.TokenGenerator;
-import com.security.token.constant.RedisConstant;
 import com.security.token.constant.TokenConstant;
 import com.security.token.entity.User;
-import com.security.token.mapper.IUserMapper;
+import com.security.token.entity.UserAuthenticationRequest;
+import com.security.token.service.IAuthenticationService;
 import com.security.token.service.IUserService;
 import com.security.token.utils.RedisUtil;
 import com.security.token.utils.TokenUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.Jedis;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -49,13 +42,38 @@ public class LoginController {
     @Resource
     IUserService userService;
 
+    @Resource
+    IAuthenticationService authenticationService;
+
     @GetMapping("/welcome")
     public String welcome() {
         return "welcome token authentication";
     }
 
+
     /**
-     * 通过手动生成的token字符串进行登录
+     * 登录认证
+     *
+     * @param userAuthenticationRequest ：用户登录认证请求
+     * @return {map}
+     */
+    @PostMapping(value = "/login")
+    public Result<Map<String, Object>> login(@RequestBody @Valid UserAuthenticationRequest userAuthenticationRequest) {
+        final Map<String, Object> userMap = CollUtil.newHashMap();
+        final Map<String, Object> authenticationMap = authenticationService.userAuthentication(userAuthenticationRequest);
+        final User user = (User) authenticationMap.get("user");
+        if (ObjectUtil.isNotNull(user)) {
+            String token = tokenUtil.getTokenByJwt(user);
+            final Jedis jedis = redisUtil.setProps(token, user.getUserName(), user.getAuthorities());
+            userMap.put("token", jedis.get(TokenConstant.ACCESS_TOKEN));
+        } else {
+            userMap.put("status", "登录失败！");
+        }
+        return Result.data(userMap);
+    }
+
+    /**
+     * 通过手动生成的token字符串进行登录，使用账号和用户名进行认证
      *
      * @param userName ：用户名
      * @param password ：密码
@@ -82,7 +100,7 @@ public class LoginController {
     }
 
     /**
-     * 通过JWT生成的token字符串进行登录
+     * 通过JWT生成的token字符串进行登录，使用账号和用户名进行认证
      *
      * @param userName ：用户名
      * @param password ：密码

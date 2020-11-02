@@ -2,7 +2,6 @@ package com.security.token.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.security.token.entity.User;
-import org.springframework.stereotype.Service;
 
 /**
  * 用户业务类
