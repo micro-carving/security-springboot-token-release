@@ -22,7 +22,7 @@ public class InterceptorConfig implements WebMvcConfigurer {
     JwtAuthorizationInterceptor jwtAuthorizationInterceptor;
 
     /**
-     * 为视图添加拦截器，拦截所有请求
+     * 为视图添加拦截器，将需要受保护的资源路径添加至拦截器注册中心
      *
      * @param registry ：视图拦截器注册中心
      */

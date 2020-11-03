@@ -6,6 +6,7 @@ import com.security.token.constant.RedisConstant;
 import com.security.token.constant.StatusCodeConstant;
 import com.security.token.constant.TokenConstant;
 import com.security.token.entity.User;
+import com.security.token.exception.AuthenticationException;
 import com.security.token.exception.TokenException;
 import com.security.token.service.IUserService;
 import com.security.token.utils.RedisUtil;
@@ -61,7 +62,7 @@ public class JwtAuthorizationInterceptor implements HandlerInterceptor {
             // 获取请求头内容
             String token = request.getHeader("token");
             if (StrUtil.isEmpty(token)) {
-                throw new TokenException("请求头中的token不存在！");
+                throw new TokenException("请求头中的token不存在，请先登录！");
             }
             log.info("从请求头获取的token值为: ---> {} ", token);
             String userName;
@@ -88,9 +89,19 @@ public class JwtAuthorizationInterceptor implements HandlerInterceptor {
                     jedis.expire(TokenConstant.TIME_STAMP, RedisConstant.TOKEN_EXPIRE_TIME);
                     log.info("成功重置token存活期!");
                 }
+
                 // 用完关闭
                 jedis.close();
-                return true;
+                // 请求的url
+                final String requestUri = request.getRequestURI();
+                // 具有p1权限才能访问r1上的资源，具有p2权限才能访问r2上的资源
+                if (user.getAuthorities().contains("p1") && requestUri.contains("/r/r1")) {
+                    return true;
+                } else if (user.getAuthorities().contains("p2") && requestUri.contains("/r/r2")) {
+                    return true;
+                } else {
+                    throw new AuthenticationException("当前无该权限，拒绝访问！");
+                }
             } else {
                 this.responseContent(response, "token 验证不合法！", StatusCodeConstant.PARAM_IS_INVALID);
             }
