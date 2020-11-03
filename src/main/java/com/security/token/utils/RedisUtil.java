@@ -67,4 +67,14 @@ public class RedisUtil {
         jedis = new Jedis(hostName, port);
         return jedis.exists(key);
     }
+
+    /**
+     * 删除指定键
+     *
+     * @param key ：键，可变长
+     */
+    public void deleteKey(String... key) {
+        jedis = new Jedis(hostName, port);
+        jedis.del(key);
+    }
 }

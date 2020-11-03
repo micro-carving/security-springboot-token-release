@@ -22,6 +22,7 @@ import redis.clients.jedis.Jedis;
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.sql.ResultSet;
 import java.util.Map;
 
 /**
@@ -52,6 +53,26 @@ public class LoginController {
         return "welcome token authentication";
     }
 
+    /**
+     * 退出或者注销
+     *
+     * @return ：{String}
+     */
+    @GetMapping("/logout")
+    public Result<String> logout(){
+        if (redisUtil.keyIsExist(TokenConstant.ACCESS_TOKEN)) {
+            redisUtil.deleteKey(TokenConstant.ACCESS_TOKEN);
+        } else if (redisUtil.keyIsExist(TokenConstant.AUTHORITIES)) {
+            redisUtil.deleteKey(TokenConstant.AUTHORITIES);
+        } else if(redisUtil.keyIsExist(TokenConstant.TIME_STAMP)) {
+            redisUtil.deleteKey(TokenConstant.TIME_STAMP);
+        } else if (redisUtil.keyIsExist(TokenConstant.USER_NAME)){
+            redisUtil.deleteKey(TokenConstant.USER_NAME);
+        } else {
+            return Result.success("redis 存储的键已过期！");
+        }
+        return Result.success("退出成功！");
+    }
 
     /**
      * 登录认证

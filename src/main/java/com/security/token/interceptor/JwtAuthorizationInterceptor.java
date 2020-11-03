@@ -66,7 +66,7 @@ public class JwtAuthorizationInterceptor implements HandlerInterceptor {
             log.info("从请求头获取的token值为: ---> {} ", token);
             String userName;
             if (!redisUtil.keyIsExist(TokenConstant.ACCESS_TOKEN)) {
-                throw new TokenException("token 无效，已过期！");
+                throw new TokenException("token 无效，已过期或被删除！");
             }
             Jedis jedis = new Jedis(hostName, port);
             userName = jedis.get(TokenConstant.USER_NAME);
