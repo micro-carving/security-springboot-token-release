@@ -6,9 +6,11 @@ import cn.hutool.core.util.StrUtil;
 import com.auth0.jwt.JWT;
 import com.security.token.annotation.AuthToken;
 import com.security.token.api.Result;
+import com.security.token.constant.StatusCodeConstant;
 import com.security.token.constant.TokenConstant;
 import com.security.token.entity.User;
 import com.security.token.entity.UserAuthenticationRequest;
+import com.security.token.exception.TokenException;
 import com.security.token.service.IAuthenticationService;
 import com.security.token.service.IUserService;
 import com.security.token.utils.RedisUtil;
@@ -62,12 +64,12 @@ public class LoginController {
         final Map<String, Object> userMap = CollUtil.newHashMap();
         final Map<String, Object> authenticationMap = authenticationService.userAuthentication(userAuthenticationRequest);
         final User user = (User) authenticationMap.get("user");
-        if (ObjectUtil.isNotNull(user)) {
+        if (ObjectUtil.isNotNull(user) && (Integer) authenticationMap.get("code") == StatusCodeConstant.HTTP_OK) {
             String token = tokenUtil.getTokenByJwt(user);
             final Jedis jedis = redisUtil.setProps(token, user.getUserName(), user.getAuthorities());
             userMap.put("token", jedis.get(TokenConstant.ACCESS_TOKEN));
         } else {
-            userMap.put("status", "登录失败！");
+            return Result.fail(authenticationMap.get("message").toString());
         }
         return Result.data(userMap);
     }
@@ -94,7 +96,7 @@ public class LoginController {
             final Jedis jedis = redisUtil.setProps(token, userName, user.getAuthorities());
             userMap.put("token", jedis.get(TokenConstant.ACCESS_TOKEN));
         } else {
-            userMap.put("status", "登录失败！");
+            return Result.fail(userName + "登录失败！");
         }
         return Result.data(userMap);
     }
@@ -121,7 +123,7 @@ public class LoginController {
             final Jedis jedis = redisUtil.setProps(token, userName, user.getAuthorities());
             userMap.put("token", jedis.get(TokenConstant.ACCESS_TOKEN));
         } else {
-            userMap.put("status", "登录失败！");
+            return Result.fail(userName + "登录失败！");
         }
         return Result.data(userMap);
     }
@@ -147,7 +149,7 @@ public class LoginController {
         if (StrUtil.equals(token, oldToken) && StrUtil.equals(oldUserName, userName) && StrUtil.equals(oldAuthorities, user.getAuthorities())) {
             userMap.put("status", userName + "访问资源r1");
         } else {
-            userMap.put("status", userName + "无访问资源r1的权限");
+            return Result.fail(userName + "无访问资源r1的权限！");
         }
         return Result.data(userMap);
     }
@@ -162,8 +164,9 @@ public class LoginController {
     @GetMapping(value = "/r/r2")
     public Result<Map<String, Object>> r2(@RequestHeader @NotNull String token, @RequestHeader @NotNull String userName) {
         final Map<String, Object> userMap = CollUtil.newHashMap();
+        final String oldToken;
         // 获取redis中存储的token值
-        final String oldToken = redisUtil.getValueByKey(TokenConstant.ACCESS_TOKEN);
+        oldToken = redisUtil.getValueByKey(TokenConstant.ACCESS_TOKEN);
         // 获取jwt解密之后用户名与权限数据
         String oldUserName = JWT.decode(token).getClaim("userName").asString();
         String authorities = JWT.decode(token).getClaim("authorities").asString();
@@ -173,7 +176,7 @@ public class LoginController {
         if (StrUtil.equals(token, oldToken) && StrUtil.equals(oldUserName, userName) && StrUtil.equals(authorities, user.getAuthorities())) {
             userMap.put("status", userName + "访问资源r2");
         } else {
-            userMap.put("status", userName + "无访问资源r2的权限");
+            return Result.fail(userName + "无访问资源r2的权限！");
         }
         return Result.data(userMap);
     }

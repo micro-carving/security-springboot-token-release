@@ -20,7 +20,7 @@ public class RedisUtil {
     @Value("${spring.redis.port}")
     private int port;
 
-
+    private Jedis jedis;
 
     /**
      * 重载redis中get方法，设置键值对
@@ -30,7 +30,7 @@ public class RedisUtil {
      * @return {Jedis}
      */
     public Jedis setProps(String token, String userName, String authorities) {
-        final Jedis jedis = new Jedis(hostName, port);
+        jedis = new Jedis(hostName, port);
         // 设置redis的key与value值
         jedis.set(TokenConstant.ACCESS_TOKEN, token);
         jedis.set(TokenConstant.USER_NAME, userName);
@@ -53,7 +53,18 @@ public class RedisUtil {
      * @return {字符串的值}
      */
     public String getValueByKey(String key) {
-        final Jedis jedis = new Jedis(hostName, port);
+        jedis = new Jedis(hostName, port);
         return jedis.get(key);
+    }
+
+    /**
+     * redis缓存是否存在指定的键
+     *
+     * @param key ： 键
+     * @return {true|false}
+     */
+    public boolean keyIsExist(String key){
+        jedis = new Jedis(hostName, port);
+        return jedis.exists(key);
     }
 }

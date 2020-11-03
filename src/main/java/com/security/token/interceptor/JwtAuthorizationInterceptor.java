@@ -6,7 +6,9 @@ import com.security.token.constant.RedisConstant;
 import com.security.token.constant.StatusCodeConstant;
 import com.security.token.constant.TokenConstant;
 import com.security.token.entity.User;
+import com.security.token.exception.TokenException;
 import com.security.token.service.IUserService;
+import com.security.token.utils.RedisUtil;
 import com.security.token.utils.TokenUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +45,9 @@ public class JwtAuthorizationInterceptor implements HandlerInterceptor {
     @Resource
     TokenUtil tokenUtil;
 
+    @Resource
+    RedisUtil redisUtil;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         if (!(handler instanceof HandlerMethod)) {
@@ -56,22 +61,24 @@ public class JwtAuthorizationInterceptor implements HandlerInterceptor {
             // 获取请求头内容
             String token = request.getHeader("token");
             if (StrUtil.isEmpty(token)) {
-                this.responseContent(response, "token 为空了！", StatusCodeConstant.PARAM_IS_NULL_OR_BLANK);
-                return false;
+                throw new TokenException("请求头中的token不存在！");
             }
-            log.info("Get token from request header is: {} ", token);
-            String userName = "";
+            log.info("从请求头获取的token值为: ---> {} ", token);
+            String userName;
+            if (!redisUtil.keyIsExist(TokenConstant.ACCESS_TOKEN)) {
+                throw new TokenException("token 无效，已过期！");
+            }
             Jedis jedis = new Jedis(hostName, port);
             userName = jedis.get(TokenConstant.USER_NAME);
-            log.info("Get userName from Redis is: {}", userName);
+            log.info("从redis缓存中获取的用户名为: ---> {}", userName);
             final User user = userService.getByUserName(userName);
+
             // 验证token的合法性，判断token中加密的用户名称与数据库存入的用户名称是否相同
             if (tokenUtil.verification(token, user)) {
                 final String timeStamp = jedis.get(TokenConstant.TIME_STAMP);
                 long tokenBirthTime = Long.parseLong(timeStamp);
-                log.info("token Birth time is: {}", tokenBirthTime);
                 Long diff = System.currentTimeMillis() - tokenBirthTime;
-                log.info("token is exist : {} ms", diff);
+                log.info("token已经存在了:【 {} 】ms", diff);
                 // 重新设置Redis中的token过期时间
                 if (diff > RedisConstant.TOKEN_RESET_TIME) {
                     jedis.expire(TokenConstant.USER_NAME, RedisConstant.TOKEN_EXPIRE_TIME);
@@ -79,7 +86,7 @@ public class JwtAuthorizationInterceptor implements HandlerInterceptor {
                     long newBirthTime = System.currentTimeMillis();
                     jedis.set(TokenConstant.TIME_STAMP, Long.toString(newBirthTime));
                     jedis.expire(TokenConstant.TIME_STAMP, RedisConstant.TOKEN_EXPIRE_TIME);
-                    log.info("Reset expire time success!");
+                    log.info("成功重置token存活期!");
                 }
                 // 用完关闭
                 jedis.close();
